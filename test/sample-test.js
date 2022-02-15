@@ -41,3 +41,43 @@ describe("IteratableMap", function () {
     // ).to.equal([ethers.BigNumber.from(100)]);
   });
 });
+
+describe("EIP712", async function () {
+  it("Should verify the signature", async function () {
+    const EIP712Contract = await ethers.getContractFactory("Eip712Verify");
+    const eip712Contract = await EIP712Contract.deploy();
+    const addreses = await ethers.getSigners();
+
+    const address = addreses[0];
+
+    console.log("address", address.address);
+
+    await eip712Contract.deployed();
+
+    const domain = {
+      name: "EIP712Verifier",
+      version: "1",
+    };
+
+    const types = {
+      set: [
+        { name: "inputString", type: "string" },
+        { name: "userAddr", type: "address" },
+      ],
+    };
+
+    const value = {
+      inputString: "string",
+      userAddr: address.address,
+    };
+
+    // Create a SigningKey from the private key
+
+    // Sign the typed data
+    const signature = await address._signTypedData(domain, types, value);
+
+    let sig = ethers.utils.splitSignature(signature);
+
+    eip712Contract.verifyHash("string", sig.v, sig.r, sig.s);
+  });
+});
